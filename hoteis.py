@@ -1,6 +1,8 @@
 import MySQLdb
 import pandas as pd
 
+pd.set_option('display.max_columns', None)
+
 
 class ConnectDB():
     def __init__(self, db_name: str, user="root", host="localhost", port=3306):
@@ -14,13 +16,17 @@ class ConnectDB():
     def read_filtro(self, dict_filtros: dict):
         filtros = ""
         for k, v in dict_filtros.items():
-            filtros += f" and {k} = {v} "
+            if k == "preco_diaria":
+                filtros += f" and {k} < {v} "
+            else:
+                filtros += f" and {k} = {v} "
+
         comando = f"""select * from hoteis
             join cidades on hoteis.id_cidade_hoteis = cidades.id_cidade
             join estado on cidades.id_regiao_cidades = estado.id_regiao
             where hoteis.vagas > 0 
             {filtros} 
-            order by hoteis.classificacao
+            order by hoteis.classificacao DESC
             limit 10"""
 
         self.cursor.execute(comando)
@@ -32,5 +38,6 @@ class ConnectDB():
         df.drop(["id_hotel", "id_cidade", "id_regiao", "id_regiao_cidades", "id_cidade_hoteis"], axis=1, inplace=True)
         print(df)
 
+
 testeDB = ConnectDB(db_name="hoteis_regioes")
-testeDB.read_filtro(dict(id_regiao=2, classificacao=4))
+testeDB.read_filtro(dict(piscina=0))
